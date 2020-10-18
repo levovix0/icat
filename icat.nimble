@@ -10,5 +10,5 @@ bin           = @["icat"]
 # Dependencies
 
 requires "nim >= 1.2.4"
-requires "cligen", "with"
-requires "imageman", "colorize"
+requires "cligen"
+requires "imageman"
