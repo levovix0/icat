@@ -1,4 +1,4 @@
-import cligen, nimPNG, with, colorize, math
+import cligen, imageman, with, colorize, math
 
 type Color = tuple
   r, g, b, a: byte
@@ -71,10 +71,11 @@ proc icat(resolution: Positive = 10, grayscale: bool = false, args: seq[string])
   doassert args.len > 0
   let file = args[0]
 
-  let img = loadPNG32 file
-  if img.isNil: echo "load error"; return
+  let img = loadImage[ColorRGBAU] file
 
-  proc col(x, y: Natural): Color = cast[ptr Color](img.data[(y * img.width + x) * 4].addr)[]
+  proc col(x, y: Natural): Color = 
+    var c = img.data[y * img.width + x]
+    cast[ptr Color](c.addr)[]
 
   let rx = (resolution.float * 0.6).int
   let ry = resolution

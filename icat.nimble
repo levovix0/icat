@@ -11,4 +11,4 @@ bin           = @["icat"]
 
 requires "nim >= 1.2.4"
 requires "cligen", "with"
-requires "nimpng", "colorize"
+requires "imageman", "colorize"

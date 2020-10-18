@@ -1,6 +1,6 @@
 ## Image cat
 
-Display an (png) image in terminal
+Display an image in terminal
 
 ```
 icat sample.png -r=20
