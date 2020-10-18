@@ -3,6 +3,6 @@
 Display an image in terminal
 
 ```
-icat sample.png -r=20
+icat sample.png
 ```
 ![](sample-out.png)

@@ -10,6 +10,7 @@ proc color(r, g, b: byte): Color = (r, g, b, 255'u8)
 proc color(r, g, b: int): Color = color r.byte, g.byte, b.byte
 proc color(a: int): Color = color (a and 0xff0000) shr 16, (a and 0x00ff00) shr 8, (a and 0x0000ff)
 
+
 const colors = [
   # 0..15: original ANSI colors
   0x000000, 0xcd0000, 0x00cd00, 0xcdcd00, 0x0000ee, 0xcd00cd, 0x00cdcd, 0xe5e5e5,
@@ -67,29 +68,43 @@ proc icat(width: Positive = terminalWidth(), grayscale: bool = false, simplePall
 
   var img = loadImage[ColorRGBAU] file
   let dh = img.h/img.w
-  img = img.resizedBilinear(width, (width.float * dh * 0.6).int)
+  img = img.resizedBilinear(width, (width.float * dh).int)
 
   proc col(x, y: Natural): Color = 
     var c = img.data[y * img.width + x]
-    cast[ptr Color](c.addr)[]
+    result = cast[ptr Color](c.addr)[]
+    if result.a == 0: return
 
-  for y in 0..<img.h:
+    let a = result.a.float / 255
+    result = color(c.r * a, c.g * a, c.b * a)
+    if grayscale:
+      let g = [result.r.int, result.g.int, result.b.int].sum div 3
+      result = color(g, g, g)
+
+  proc `$`(c: Color): string =
+    if not simplePallete:
+      &"\x1b[0m\x1b[38;2;{c.r};{c.g};{c.b}m"
+    else:
+      &"\x1b[0m\x1b[38;5;{findInColors c}m"
+
+  proc `$`(c: (Color, Color)): string =
+    if not simplePallete:
+      &"\x1b[38;2;{c[0].r};{c[0].g};{c[0].b}m\x1b[48;2;{c[1].r};{c[1].g};{c[1].b}m"
+    else:
+      &"\x1b[38;5;{findInColors c[0]}m\x1b[48;5;{findInColors c[1]}m"
+
+  for y in countup(0, img.h-2, 2):
     for x in 0..<img.w:
-      var c = col(x, y)
-      if c.a == 0:
+      var c1 = col(x, y + 1)
+      var c2 = col(x, y)
+      if c1.a == 0 and c2.a == 0:
         stdout.write "\x1b[0m "
-        continue
-
-      let a = c.a.float / 255
-      c = color(c.r * a, c.g * a, c.b * a)
-      if grayscale:
-        let g = [c.r.int, c.g.int, c.b.int].sum div 3
-        c = color(g, g, g)
-      
-      if not simplePallete:
-        stdout.write &"\x1b[38;2;{c.r};{c.g};{c.b}m█"
+      elif c2.a == 0:
+        stdout.write &"{$c1}▀"
+      elif c1.a == 0:
+        stdout.write &"{$c2}▄"
       else:
-        stdout.write &"\x1b[38;5;{findInColors c}m█"
+        stdout.write &"{$(c1, c2)}▄"
     stdout.write '\n'
 
 dispatch icat
