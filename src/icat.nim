@@ -60,15 +60,29 @@ proc findInColors(c: Color): Natural =
       minDelta = delta
       result = i
 
-proc icat(width: Positive = terminalWidth(), grayscale: bool = false, simplePallete: bool = false, args: seq[string]) =
+proc icat(width: Natural = terminalWidth(), height: Natural = 0, scale: bool = false, grayscale: bool = false, simplePallete: bool = false, args: seq[string]) =
   ## Display an image in terminal
   
   doassert args.len > 0
   let file = args[0]
 
   var img = loadImage[ColorRGBAU] file
-  let dh = img.h/img.w
-  img = img.resizedBilinear(width, (width.float * dh).int)
+
+  var
+    w = width
+    h = (width.float * (img.h/img.w)).Natural
+  if height != 0 or width == 0:
+    if height != 0:
+      h = height
+      w = (height.float * (img.w/img.h)).Natural
+    else:
+      h = terminalHeight() * 2
+      w = (h.float * (img.w/img.h)).Natural
+  if scale:
+    w = if width != 0: width else: terminalWidth()
+    h = if height != 0: height else: terminalHeight() * 2
+
+  img = img.resizedBilinear(w, h)
 
   proc col(x, y: Natural): Color = 
     var c = img.data[y * img.width + x]
@@ -105,6 +119,6 @@ proc icat(width: Positive = terminalWidth(), grayscale: bool = false, simplePall
         stdout.write &"{$c2}▄"
       else:
         stdout.write &"{$(c1, c2)}▄"
-    stdout.write '\n'
+    stdout.write "\x1b[0m\n"
 
 dispatch icat
